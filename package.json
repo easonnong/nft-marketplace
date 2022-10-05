@@ -1,5 +1,5 @@
 {
-  "name": "hardhat-starter-kit",
+  "name": "Nextjs-NFT-Marketplace",
   "version": "1.0.0",
   "description": "",
   "scripts": {
@@ -30,15 +30,11 @@
     "solidity-coverage": "^0.7.13"
   },
   "dependencies": {
-    "@appliedblockchain/chainlink-contracts": "0.0.4",
-    "@appliedblockchain/chainlink-plugins-fund-link": "0.0.1",
-    "@chainlink/contracts": "^0.4.0",
-    "@chainlink/test-helpers": "^0.0.7-alpha",
-    "@chainlink/token": "^1.1.0",
+    "@openzeppelin/contracts": "^4.7.3",
     "babel-eslint": "^10.1.0",
     "dotenv": "^10.0.0"
   },
-  "mocha": {
-    "timeout": 10000000
-  }
+  "mocha": {},
+  "repository": "git@github.com:easonnong/NextJS-NFT-Marketplace.git",
+  "author": "easonnong <nongeason@gmail.com>"
 }
