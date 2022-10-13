@@ -16,12 +16,6 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
         waitBlockConfirmations: waitBlockConfirmations
     })
 
-    // Verify the deployment
-    if (!developmentChains.includes(network.name) && process.env.ETHERSCAN_API_KEY) {
-
-        console.log("Verifying...");
-        await verify(basicNft.address, arguments)
-    }
 }
 
 module.exports.tags = ["all", "basicNft"]

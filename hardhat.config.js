@@ -64,7 +64,7 @@ module.exports = {
             polygon: POLYGONSCAN_API_KEY,
             goerli: ETHERSCAN_API_KEY,
         },
-        customChains: [],
+        customChains: []
     },
     gasReporter: {
         enabled: REPORT_GAS,
