@@ -39,6 +39,19 @@ const { developmentChains } = require("../../helper-hardhat-config")
       await basicNft.approve(ethers.constants.AddressZero, TOKEN_ID)
       await expect(nftMarketplace.listItem(basicNft.address, TOKEN_ID, PRICE)).to.be.revertedWith("NotApprovedForMarketplace")
     })
+    it("Updates listing with seller and price", async () => {
+      await nftMarketplace.listItem(basicNft.address, TOKEN_ID, PRICE)
+      const listing = await nftMarketplace.getListing(basicNft.address, TOKEN_ID)
+      assert(listing.price.toString() == PRICE.toString())
+      assert(listing.seller.toString() == deployer.address)
+    })
+  })
+
+  describe("cancelListing", function () {
+    it("reverts if there is no listing", async () => {
+      const error = `NotListed("${basicNft.address}", ${TOKEN_ID})`
+      await expect(nftMarketplace.cancelListing(basicNft.address, TOKEN_ID)).to.be.revertedWith(error)
+    })
   })
 
 })
