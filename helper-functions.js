@@ -18,6 +18,5 @@ const verify = async (contractAddress, args) => {
 }
 
 module.exports = {
-  autoFundCheck,
   verify,
 }
