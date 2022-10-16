@@ -84,7 +84,7 @@ const { developmentChains } = require("../../helper-hardhat-config")
             nftMarketplace.cancelListing(basicNft.address, TOKEN_ID)
           ).to.be.revertedWithCustomError(nftMarketplace, "NotListed")
         })
-        it("updates cancel item price to 0", async () => {
+        it("updates canceled item price to zero", async () => {
           let { nftMarketplace, basicNft } = await loadFixture(deployContractLockFixture)
           await nftMarketplace.listItem(basicNft.address, TOKEN_ID, PRICE)
           let listing = await nftMarketplace.getListing(basicNft.address, TOKEN_ID)
@@ -109,6 +109,43 @@ const { developmentChains } = require("../../helper-hardhat-config")
       describe.only("buyItem", function () {
         it("reverts if the item isnt listed", async () => {
           let { nftMarketplace, basicNft } = await loadFixture(deployContractLockFixture)
+          await expect(
+            nftMarketplace.buyItem(basicNft.address, TOKEN_ID)
+          ).to.be.revertedWithCustomError(nftMarketplace, "NotListed")
+        })
+        it("reverts if the price isnt met", async () => {
+          let { nftMarketplace, basicNft } = await loadFixture(deployContractLockFixture)
+          await nftMarketplace.listItem(basicNft.address, TOKEN_ID, PRICE)
+          await expect(
+            nftMarketplace.buyItem(basicNft.address, TOKEN_ID)
+          ).to.be.revertedWithCustomError(nftMarketplace, "PriceNotMet")
+        })
+        it("updates buyed item price to zero", async () => {
+          let { nftMarketplace, nftMarketplaceContract, basicNft, user } = await loadFixture(
+            deployContractLockFixture
+          )
+          await nftMarketplace.listItem(basicNft.address, TOKEN_ID, PRICE)
+          nftMarketplace = nftMarketplaceContract.connect(user)
+          await nftMarketplace.buyItem(basicNft.address, TOKEN_ID, { value: PRICE })
+          let listing = await nftMarketplace.getListing(basicNft.address, TOKEN_ID)
+          assert(listing.price.toString() == "0")
+        })
+        it("transfers the nft to the buyer and updates internal proceeds record", async () => {
+          let { nftMarketplace, nftMarketplaceContract, basicNft, deployer, user } =
+            await loadFixture(deployContractLockFixture)
+          await nftMarketplace.listItem(basicNft.address, TOKEN_ID, PRICE)
+          let ownerOfNft = await basicNft.ownerOf(TOKEN_ID)
+          assert(ownerOfNft == deployer.address)
+          let proceeds = await nftMarketplace.getProceeds(deployer.address)
+          assert(proceeds.toString() == "0")
+          nftMarketplace = nftMarketplaceContract.connect(user)
+          await expect(
+            nftMarketplace.buyItem(basicNft.address, TOKEN_ID, { value: PRICE })
+          ).to.be.emit(nftMarketplace, "ItemBought")
+          ownerOfNft = await basicNft.ownerOf(TOKEN_ID)
+          assert(ownerOfNft == user.address)
+          proceeds = await nftMarketplace.getProceeds(deployer.address)
+          assert(proceeds.toString() == PRICE.toString())
         })
       })
     })
