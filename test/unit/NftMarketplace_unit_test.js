@@ -148,4 +148,11 @@ const { developmentChains } = require("../../helper-hardhat-config")
           assert(proceeds.toString() == PRICE.toString())
         })
       })
+
+      describe("updateListing", function () {
+        it("must be owner and listed", async () => {
+          let { nftMarketplace, nftMarketplaceContract, basicNft, deployer, user } =
+            await loadFixture(deployContractLockFixture)
+        })
+      })
     })
