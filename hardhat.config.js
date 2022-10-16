@@ -30,7 +30,7 @@ module.exports = {
       hardfork: "merge",
       forking: {
         url: MAINNET_RPC_URL,
-        blockNumber: FORKING_BLOCK_NUMBER,
+        //blockNumber: FORKING_BLOCK_NUMBER,
         enabled: false,
       },
       chainId: 31337,
