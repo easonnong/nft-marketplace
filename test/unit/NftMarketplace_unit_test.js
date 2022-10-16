@@ -151,8 +151,77 @@ const { developmentChains } = require("../../helper-hardhat-config")
 
       describe("updateListing", function () {
         it("must be owner and listed", async () => {
+          let { nftMarketplace, nftMarketplaceContract, basicNft, user } = await loadFixture(
+            deployContractLockFixture
+          )
+          await expect(
+            nftMarketplace.updateListing(basicNft.address, TOKEN_ID, PRICE)
+          ).to.be.revertedWithCustomError(nftMarketplace, "NotListed")
+          await nftMarketplace.listItem(basicNft.address, TOKEN_ID, PRICE)
+          nftMarketplace = nftMarketplaceContract.connect(user)
+          let updatedPrice = ethers.utils.parseEther("0.2")
+          await expect(
+            nftMarketplace.updateListing(basicNft.address, TOKEN_ID, updatedPrice)
+          ).to.be.revertedWithCustomError(nftMarketplace, "NotOwner")
+        })
+        it("reverts if the update price is less than or equal to zero", async () => {
+          let { nftMarketplace, basicNft } = await loadFixture(deployContractLockFixture)
+          await nftMarketplace.listItem(basicNft.address, TOKEN_ID, PRICE)
+          let updatedPrice = ethers.utils.parseEther("0")
+
+          await expect(
+            nftMarketplace.updateListing(basicNft.address, TOKEN_ID, updatedPrice)
+          ).to.be.revertedWithCustomError(nftMarketplace, "PriceMustBeAboveZero")
+        })
+        it("updates the price of the item and emits ItemListed", async () => {
+          let { nftMarketplace, basicNft } = await loadFixture(deployContractLockFixture)
+          await nftMarketplace.listItem(basicNft.address, TOKEN_ID, PRICE)
+          let listing = await nftMarketplace.getListing(basicNft.address, TOKEN_ID)
+          assert(listing.price.toString() == PRICE.toString())
+          let updatedPrice = ethers.utils.parseEther("0.2")
+          await expect(
+            nftMarketplace.updateListing(basicNft.address, TOKEN_ID, updatedPrice)
+          ).to.emit(nftMarketplace, "ItemListed")
+          listing = await nftMarketplace.getListing(basicNft.address, TOKEN_ID)
+          assert(listing.price.toString() == updatedPrice.toString())
+        })
+      })
+
+      describe("withdrawProceeds", function () {
+        it("doesn't allow 0 proceed withdraws", async () => {
+          let { nftMarketplace } = await loadFixture(deployContractLockFixture)
+          await expect(nftMarketplace.withdrawProceeds()).to.be.revertedWithCustomError(
+            nftMarketplace,
+            "NotProceeds"
+          )
+        })
+        it("withdraws proceeds", async () => {
           let { nftMarketplace, nftMarketplaceContract, basicNft, deployer, user } =
             await loadFixture(deployContractLockFixture)
+          await nftMarketplace.listItem(basicNft.address, TOKEN_ID, PRICE)
+          nftMarketplace = nftMarketplaceContract.connect(user)
+          await nftMarketplace.buyItem(basicNft.address, TOKEN_ID, { value: PRICE })
+          //console.log(`nftMarketplace balance=${await ethers.provider.getBalance(nftMarketplace.address)}`)
+          nftMarketplace = nftMarketplaceContract.connect(deployer)
+          const deployerProceedBefore = await nftMarketplace.getProceeds(deployer.address)
+          const deployerBalanceBefore = await deployer.getBalance()
+          //console.log(`deployerProceedBefore=${deployerProceedBefore.toString()}`)
+          //console.log(`deployerBalanceBefore=${deployerBalanceBefore.toString()}`)
+          const txResponse = await nftMarketplace.withdrawProceeds()
+          const transactionReceipt = await txResponse.wait(1)
+          const { gasUsed, effectiveGasPrice } = transactionReceipt
+          //console.log(`gasUsed:${gasUsed.toString()} type:${typeof gasUsed}`)
+          //console.log(`effectiveGasPrice:${effectiveGasPrice.toString()} type:${typeof effectiveGasPrice}`)
+          const gasCost = gasUsed.mul(effectiveGasPrice)
+          //console.log(`gasCost=${gasCost.toString()} type:${typeof gasCost}`)
+          const deployerProceedAfter = await nftMarketplace.getProceeds(deployer.address)
+          const deployerBalanceAfter = await deployer.getBalance()
+          //console.log(`deployerProceedAfter=${deployerProceedAfter.toString()}`)
+          //console.log(`deployerBalanceAfter=${deployerBalanceAfter.toString()}`)
+          assert(
+            deployerBalanceAfter.add(gasCost).toString() ==
+              deployerProceedBefore.add(deployerBalanceBefore).toString()
+          )
         })
       })
     })
