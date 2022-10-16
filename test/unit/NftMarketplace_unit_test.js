@@ -106,5 +106,9 @@ const { developmentChains } = require("../../helper-hardhat-config")
         })
       })
 
-      describe("buyItem")
+      describe.only("buyItem", function () {
+        it("reverts if the item isnt listed", async () => {
+          let { nftMarketplace, basicNft } = await loadFixture(deployContractLockFixture)
+        })
+      })
     })
